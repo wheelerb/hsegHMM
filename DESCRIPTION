@@ -1,0 +1,22 @@
+Package: hsegHMM
+Title: The HsegHMM Model for Allele Specific SCNA Analysis
+Version: 0.1.0
+Date: 2018-08-21
+Authors@R: c(
+    person(
+        "Bill", "Wheeler", email = "wheelerb@imsweb.com", role=c("cre")
+    ),
+    person("Bin", "Zhu", role = "aut"),
+    person("Paul", "Albert", role = "aut"),
+    person("Hyoyoung", "Choo-Wosoba", role = "aut"))
+Description: Hidden Markov Model-based Allele-specific Copy Number Alteration Analysis Accounting for Hypersegmentation.
+Maintainer: Bill Wheeler <wheelerb@imsweb.com>
+Imports: stats, utils
+Suggests: facets, graphics, grDevices
+License: GPL-2
+NeedsCompilation: no
+Packaged: 2018-08-24 15:51:22 UTC; wheelerwi
+Author: Bill Wheeler [cre],
+  Bin Zhu [aut],
+  Paul Albert [aut],
+  Hyoyoung Choo-Wosoba [aut]
