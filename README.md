@@ -1,4 +1,6 @@
 # hsegHMM
+The hsegHMM package requires the facets package, available at https://github.com/mskcc/facets.
+
 Installation:
 
 Download hsegHMM_0.1.0.tar.gz (for Unix) or hsegHMM_0.1.0.zip (for Windows).
