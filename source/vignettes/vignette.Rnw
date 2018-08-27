@@ -1,0 +1,148 @@
+%\VignetteIndexEntry{hsegHMM Vignette}
+%\VignettePackage{hsegHMM}
+%\VigetteDepends{hsegHMM}
+
+\documentclass[a4paper]{article}
+
+
+\begin{document}
+
+\title{hsegHMM Package}
+\maketitle
+
+\tableofcontents
+\newpage
+
+\section{Introduction}
+Characterizing somatic copy number alterations (SCNAs) is important for understanding
+tumorigenesis, cancer etiology and prognosis. In
+normal cells, two copies of chromosome are inherited from both parents. In contrast,
+tumor cells frequently contain alterations in copy numbers across the chromosomes, such
+as deletions, insertions, or amplifications among others. 
+In addition, tumor tissues always contain normal cells (reduced tumor purity)
+and frequently show an abnormal number of chromosomes (aneuploidy). These
+characteristics of the cancer genome and tissue heterogeneity complicate the estimation
+of SCNAs.
+
+This package considers next-generation sequencing (NGS) platform-based data
+for studying SCNAs. The NGS technology provides high resolution at the single basepair,
+which comes with mapping bias and the tendency for hypersegmentation. Mapping
+bias occurs from higher mapping rates for the reference allele than those for the variant
+allele at heterozygous loci. This bias leads to incorrect
+interpretations of allele-specific SCNAs. Hypersegmentation is also a major challenge in
+NGS-based allele-specific SCNA. 
+
+This package utilizes a novel hidden Markov modeling approach (hsegHMM)
+for allele-specific SCNA analysis accounting for the hypersegmentation and 
+ simultaneously conducts the segmentation and genotype
+mixture modeling required to identify SCNAs across chromosomes.
+
+
+\section{Example using simulated TCGA data and the facets package}
+
+Load the facets and hsegHMM packages
+<<facets>>=
+library(facets)
+library(hsegHMM)
+@
+
+
+Get the path to the data.
+<<data file>>=
+datafile <- system.file("sampleData", "facets_data.csv.gz", package="hsegHMM")
+@
+
+Read in the data
+<<read>>=
+tcga <- readSnpMatrix(datafile)
+@
+
+Set a seed and pre-process the data
+<<pre>>=
+set.seed(2017)
+xx <- preProcSample(tcga,ndepth=5)
+@
+
+Process the data to get log(ratio) and log(OR) values
+<<process>>=
+oo <- procSample(xx,cval=150)
+@
+
+Pull out log(ratio) and log(OR) values 
+<<logor>>=
+inputs <- oo$jointseg[,11:12] 
+lr <- inputs[,1]
+logor <- inputs[,2]
+@
+
+For faster convergence, take a subset.
+<<thin>>=
+idx_thin <- seq(1, length(lr), 30)
+lr       <- lr[idx_thin]
+logor    <- logor[idx_thin]
+@
+
+Call the hsegHMM main function. Note that stopTol is set to 1 for faster convergence. 
+<<hsegHMM>>=
+ret <- hsegHMM_T(lr, logor, purity=0.8, ploidy=1.5, logR.var=0.5,
+                    logOR.var=0.5, df=3, stopTol=1)
+@
+
+Get the genotype states and copy number
+<<geno>>=
+gtype <- ret$genoStates
+ctz0  <- ret$copyNumber
+@
+
+Get the genotype status which gives the maximum posterior probability at each location 
+<<maxprob>>=
+idx_hgtype <- ret$which.max.post.prob
+@
+
+Get the copy number at the maximum posterior probability
+<<copynumber>>=
+hat_ctz    <- ctz0[idx_hgtype]
+@
+
+Get the expectation of logR and logOR based on estimates from hsegHMM
+<<hatlrlogor>>=
+hat_logr  <- ret$logR_hat
+hat_logor <- ret$logOR_hat
+@
+
+Create a plot for the tumor copy number profile across chromosomes.
+The blue dots are observed values and red bars are estimates.
+The first two panels show the profiles of logR and
+logOR over the entire chromosomes. The last two panels indicate estimated copy
+numbers and genotype for each sequence over the entire chromosomes.
+<<plot>>=
+par(mfrow=c(4,1))
+
+plot(1:length(lr), lr, pch=20, col="blue", cex=0.5, 
+  xlab="genetic location", cex.lab=1.5, ylab="logR")
+points(1:length(hat_logr),hat_logr, pch=20, col="red", cex=0.5)
+
+plot(1:length(logor), logor, pch=20, col="blue", ylab="logOR",
+   cex.lab=1.5,xlab="genetic location",cex=0.5, 
+   ylim=c(min(na.omit(logor)),max(na.omit(logor))))
+points(1:length(hat_logor), hat_logor, pch=20,col="red", cex=0.5)
+points(1:length(hat_logor), -hat_logor, pch=20,col="red", cex=0.5)
+
+plot(1:length(hat_ctz), hat_ctz, pch=20, ylab="copy number",cex.lab=1.5,
+  xlab="genetic location", ylim=c(0,max(hat_ctz)),col="red", cex=0.5)
+
+plot(1:length(idx_hgtype), idx_hgtype-1, pch=20, ylab="",cex.lab=1.5, 
+ xlab="genetic location",ylim=c(0,max(idx_hgtype-1)), yaxt="n",
+ col="red", cex=0.5)
+axis(2, at=c(0:max(idx_hgtype-1)), labels=gtype[1:max(idx_hgtype)], las=2) 
+@
+
+
+\section{Session Information}
+<<sessionInfo>>=
+sessionInfo()
+@ 
+
+\end{document}
+
+
