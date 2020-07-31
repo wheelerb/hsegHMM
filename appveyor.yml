@@ -10,7 +10,7 @@ install:
   ps: Bootstrap
 
 # Adapt as necessary starting from here
-
+cd source
 
 cache:
   - C:\RLibrary
